@@ -10,6 +10,7 @@ import (
 
 	"github.com/bootdotdev/learn-web-security/internal/accounts"
 	"github.com/bootdotdev/learn-web-security/internal/auth/mfa"
+	"github.com/bootdotdev/learn-web-security/internal/auth/passwords"
 	"github.com/bootdotdev/learn-web-security/internal/auth/sessions"
 	"github.com/bootdotdev/learn-web-security/internal/httpx"
 	"github.com/bootdotdev/learn-web-security/internal/logging"
@@ -71,6 +72,18 @@ func (handler *Handler) UpdateEmail(responseWriter http.ResponseWriter, request 
 	current, ok := handler.requireAuth(responseWriter, request)
 	if !ok || !handler.verifyCSRF(responseWriter, request, current.Session.CSRFToken) {
 		return
+	}
+	pswd, err := httpx.FormValue(request, "currentPassword")
+	if err != nil {
+		handler.internalError(responseWriter, request, err)
+		return
+	}
+	if pswd == "" || !passwords.Verify(pswd, current.User.PasswordHash) {
+		if err := handler.renderPage(responseWriter, http.StatusForbidden, current, "Re-enter your current password to change your email."); err != nil {
+    		handler.internalError(responseWriter, request, err)
+			return
+		}
+		return			
 	}
 	email, emailErr := httpx.FormValue(request, "email")
 	if emailErr != nil {
