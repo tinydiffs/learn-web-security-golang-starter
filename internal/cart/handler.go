@@ -1,7 +1,7 @@
 package cart
 
 import (
-	"math"
+	// "math"
 	"net/http"
 	"strconv"
 
@@ -186,11 +186,35 @@ func makeItemViews(items []Item) []itemView {
 	return viewItems
 }
 
+// func parseQuantity(value string, minimum int64) (int64, bool) {
+// 	parsed, err := strconv.ParseFloat(value, 64)
+// 	if err != nil || math.IsNaN(parsed) || math.IsInf(parsed, 0) || parsed != math.Trunc(parsed) {
+// 		return 0, false
+// 	}
+// 	quantity := int64(parsed)
+// 	return quantity, quantity >= minimum && quantity <= MaximumQuantity
+
+	
+// }
+
+
 func parseQuantity(value string, minimum int64) (int64, bool) {
-	parsed, err := strconv.ParseFloat(value, 64)
-	if err != nil || math.IsNaN(parsed) || math.IsInf(parsed, 0) || parsed != math.Trunc(parsed) {
+	if len(value) < 1 || len(value) > 2 {
 		return 0, false
 	}
-	quantity := int64(parsed)
-	return quantity, quantity >= minimum && quantity <= MaximumQuantity
+	if value[0] == '0' && len(value) > 1 {
+		return 0, false
+	}
+	for _, ch := range value {
+		if ch < '0' || ch > '9' {
+			return 0, false
+		}
+	}
+
+	parsed, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+
+	return parsed, parsed >= minimum && parsed <= MaximumQuantity
 }
